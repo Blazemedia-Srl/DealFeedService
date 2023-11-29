@@ -53,3 +53,5 @@ done
 
 # Stampare l'array dei file scaricati (opzionale)
 printf '%s\n' "${downloaded_files[@]}"
+
+php fetch.php
