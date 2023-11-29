@@ -1,0 +1,22 @@
+{
+    "name": "blazemedia/dealfeedservice",
+    "type": "project",
+    "repositories": [{
+        "type": "composer",
+        "url": "https://packagist.blazemedia.it"
+    }],
+    "require":{
+        "blazemedia/gspreadsheet": "dev-master",
+        "maatwebsite/excel": "^3.1",
+        "nesbot/carbon": "^2.71",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "Blazemedia\\App\\": "src/"
+        }
+    }
+}
