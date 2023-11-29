@@ -3,17 +3,16 @@
 namespace Blazemedia\App;
 
 use Blazemedia\App\Api\DealFeedAppendSpreadsheetApi;
-use Blazemedia\App\Utilities\CsvReader;
+use Blazemedia\App\Utilities\DataAdapter;
 use Carbon\Carbon;
+use SplFileObject;
 
 class DealFeedSpreadSheetFetcher {
 
-    const BASE_DIRECTORY = 'amazon-temp';
     protected array $availableLinks = [];
     protected array $dataByCategory = [];
-    protected array $dataHeader = [];
-    protected $startDate;
-    protected $endDate;
+    protected array $dataHeader,$dataHeaderClean = [];
+    protected $clearData;
     protected $credentials;
 
     /**
@@ -26,79 +25,70 @@ class DealFeedSpreadSheetFetcher {
         $this->credentials = $credentials;
 
         $this->setOptions();
-    }
 
-    /**
-     * Current account credentials
-     *
-     * @var null|array
-     */
-    protected $currentAccount = null;
-
-    protected function fetchOps(): void {
         $this->clearPlatformData();
 
-        $this->currentAccount = env('apiamazon.accounts.blazemedia', []);
-
         $this->fetchFile();
-
-        foreach ($this->availableLinks as $url) {
-            $this->fetchFile($url);
-        }
     }
 
     ///fetchDay
     protected function fetchFile(): void {
 
-        $date = $this->startDate;
-        echo('Starting import for date ' . $date->format('d/m/Y'));
-        $filePath = __DIR__.'../amazon-temp/dealfeeds.csv.gz';
+        $date = Carbon::today();
+        echo('Starting import from date ' . $date->format('d/m/Y'));
+        $filePath = __DIR__.'/../amazon-temp/dealfeeds.csv.gz';
 
         if (!file_exists($filePath)) {
-            echo('File non trovato');
+            echo("\nFile non trovato\n\n");
             die();
         }
 
         $fileUnzipped = $this->unZipFile($filePath);
 
-        $this->warn('Appending Datas...');
+        echo("\nAppending Datas...\n");
 
         gc_enable();
-        $i = 0;
 
-        $csv = new CsvReader($fileUnzipped);
-        $i = 0;
-        $csv->foreach(function ($data) use (&$i,$date) {
-            try {
+        try {
+            $file = new SplFileObject($fileUnzipped); 
+            $file->setFlags(SplFileObject::READ_CSV); 
+            
+            $i = 0;
+            foreach ($file as $row) {
+    
+                if(empty($row))continue; 
+                $this->adaptData($row);
+            } 
 
-                $this->adaptData($data);
-                $i++;
-
-            } catch (\Throwable $th) {
-                echo $th;
+            if($this->completeSpreadsheet()){
+                echo "\n DONE \n";
             }
+        } catch (\Throwable $th) {
+            //throw $th;
+            echo("\nSomething went wrong fetching Amazon! ERROR:\n$th");
+        }
 
-            if( $i % 500 == 0 ) gc_collect_cycles();
-        });
+      
+    
 
-        $this->line(' Datas imported...', 'success');
-
-        echo("\nSomething went wrong fetching Amazon! ");
     }
 
-    protected function adaptData($data) {
-
+    protected function adaptData($dataDirty) {
         if (count($this->dataByCategory) == 0 && empty($this->dataHeader)) {
-            unset($data['category']);
-            unset($data['imageURL']);
-            unset($data['browseNodeId1']);
-            unset($data['browseNodeId2']);
-            unset($data['subcategoryPath2']);
-            unset($data['marketingMessage']);
+            $dataHeader = array_combine($dataDirty, $dataDirty);
+            unset($dataHeader['category']);
+            unset($dataHeader['imageURL']);
+            unset($dataHeader['browseNodeId1']);
+            unset($dataHeader['browseNodeId2']);
+            unset($dataHeader['subcategoryPath2']);
+            unset($dataHeader['marketingMessage']);
 
-            $this->dataHeader = $data;
+            $this->dataHeader = $dataDirty;
+            $this->dataHeaderClean = (new DataAdapter())->getHeader();;
             return;
         }
+
+        $data = array_combine($this->dataHeader, array_slice($dataDirty,0,19));
 
         $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
         if ($endDate->isPast()) return;
@@ -113,10 +103,12 @@ class DealFeedSpreadSheetFetcher {
         unset($data['browseNodeId2']);
         unset($data['subcategoryPath2']);
         unset($data['marketingMessage']);
-
+        
+        $data = (new DataAdapter())->getData($data);
+        
         $this->dataByCategory[$category][] = array_values($data);
-
-        if (count($this->dataByCategory[$category]) == 1000) {
+        
+        if (count($this->dataByCategory[$category]) == 500) {
 
             $this->appendDataToSpreadsheet($category, $this->dataByCategory[$category]);
             $this->dataByCategory[$category][] = [];
@@ -124,17 +116,19 @@ class DealFeedSpreadSheetFetcher {
     }
 
 
-
     protected function appendDataToSpreadsheet($category, $dataRow) {
 
         $sheet = new DealFeedAppendSpreadsheetApi($this->credentials);
+        
+        echo "\n".$category."\n";
 
-        $sheet->appendData($category, 'Sheet1', $dataRow, $this->dataHeader);
+        return $sheet->appendData($category, $dataRow, $this->dataHeaderClean,'Sheet1');
     }
 
     protected function setOptions(){
-        $this->startDate = getOpt('start-date');
-        $this->endDate = getOpt('start-date');
+        if($clearData = getopt('clear-data')){
+            $this->clearData = $clearData;
+        }
     }
 
     
@@ -154,4 +148,20 @@ class DealFeedSpreadSheetFetcher {
 
         return $outputFilename;
     }
+
+    
+    protected function clearPlatformData(){
+
+    }
+
+    protected function completeSpreadsheet():bool{
+        if(empty($this->dataByCategory))return false;
+
+        foreach($this->dataByCategory as $category=>$data){
+            $this->appendDataToSpreadsheet($category,$data);
+        }
+
+        return true;
+    }
+
 }

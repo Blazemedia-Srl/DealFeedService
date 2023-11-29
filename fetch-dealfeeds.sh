@@ -1,6 +1,6 @@
 #!/bin/bash
 
-file_path="/amazon-temp/"
+file_path="amazon-temp/"
 base_url="https://assoc-datafeeds-eu.amazon.com/datafeed/"
 userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"  # Esempio di User-Agent di Chrome su Windows 10
 

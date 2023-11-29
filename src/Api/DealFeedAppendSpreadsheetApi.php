@@ -20,11 +20,10 @@ class DealFeedAppendSpreadsheetApi {
     }
 
 
-    public function appendData($spreadsheetTitle, $range = 'Sheet1', array $dataRow, array $dataHeader) {
+    public function appendData($spreadsheetTitle, array $dataRow, array $dataHeader, $range = 'Sheet1',) {
         if (empty($spreadsheetTitle)) return;
-        return;
-        $spreadsheet = $this->spreadsheetService->deleteByName($spreadsheetTitle);
-        return;
+
+        //  $spreadsheet = $this->spreadsheetService->deleteByName($spreadsheetTitle);return;
 
         $spreadsheet = $this->spreadsheetService->checkOrCreate($spreadsheetTitle, $dataHeader);
 
