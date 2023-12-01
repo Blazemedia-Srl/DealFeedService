@@ -203,7 +203,6 @@ class DealFeedSpreadSheetFetcher {
                 dealid VARCHAR(50),
                 dealtype VARCHAR(50),
                 dealstate VARCHAR(50),
-                PRIMARY KEY (ASIN)
             )";
 
         $this->db->exec($query);
