@@ -202,7 +202,7 @@ class DealFeedSpreadSheetFetcher {
                 URL VARCHAR(255),
                 dealid VARCHAR(50),
                 dealtype VARCHAR(50),
-                dealstate VARCHAR(50),
+                dealstate VARCHAR(50)
             )";
 
         $this->db->exec($query);
