@@ -9,8 +9,17 @@ class DataAdapter {
     }
 
     public function getData($data) {
-
+        
+        $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
+        // if ($endDate->isPast()) return;
         $categories = explode("/", $data['subcategoryPath1']);
+
+        unset($data['category']);
+        unset($data['imageURL']);
+        unset($data['browseNodeId1']);
+        unset($data['browseNodeId2']);
+        unset($data['subcategoryPath2']);
+        unset($data['marketingMessage']);
 
         $dateStart= Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealStartTime'])->format('d/m/Y H:i:s');
         $dateEnd =  Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime'])->format('d/m/Y H:i:s');
@@ -29,9 +38,9 @@ class DataAdapter {
             'Tipo Referenza' => $data['referencePriceType'],
             'Data Inizio' => $dateStart,
             'Data Fine' => $dateEnd,
-            'Categoria' => isset($categories[0]) ? $categories[0] : '',
-            'Sub Categoria' => isset($categories[1]) ? $categories[1] : '',
-            'Sub Categoria 2' => isset($categories[2]) ? $categories[2] : '',
+            'Categoria' => isset($categories[1]) ? $categories[1] : '',
+            'Sub Categoria' => isset($categories[2]) ? $categories[2] : '',
+            'Sub Categoria 2' => isset($categories[3]) ? $categories[3] : '',
             'URL' => $data['dealURL'],
             'DealID' => $data['dealID'],
             'DealType' =>  $data['dealType'],

@@ -16,7 +16,6 @@ class DealFeedSpreadSheetFetcher {
     protected $clearData;
     protected $credentials;
     protected $db;
-    protected $i;
 
     /**
      * Create a new fetcher command instance.
@@ -55,10 +54,7 @@ class DealFeedSpreadSheetFetcher {
         try {
             $file = new SplFileObject($fileUnzipped);
             $file->setFlags(SplFileObject::READ_CSV);
-
-            $this->i = 0;
             foreach ($file as $row) {
-
                 if (empty($row)) continue;
                 $this->adaptData($row);
             }
@@ -73,6 +69,7 @@ class DealFeedSpreadSheetFetcher {
     }
 
     protected function adaptData($dataDirty) {
+
         if (count($this->dataByCategory) == 0 && empty($this->dataHeader)) {
             $dataHeader = array_combine($dataDirty, $dataDirty);
             unset($dataHeader['category']);
@@ -83,31 +80,28 @@ class DealFeedSpreadSheetFetcher {
             unset($dataHeader['marketingMessage']);
 
             $this->dataHeader = $dataDirty;
-            $this->dataHeaderClean = (new DataAdapter())->getHeader();;
+            $this->dataHeaderClean = (new DataAdapter())->getHeader();
             return;
         }
 
-        $data = array_combine($this->dataHeader, array_slice($dataDirty, 0, 19));
+        if(count($this->dataHeader) != count($dataDirty))return;
+
+        $data = array_combine($this->dataHeader, $dataDirty);
 
         $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
         if ($endDate->isPast()) return;
-
         $categories = explode("/", $data['subcategoryPath1']);
         $category = array_shift($categories);
         $data['subcategoryPath1'] = implode("/", array_slice($categories, 0, 3));
 
-        unset($data['category']);
-        unset($data['imageURL']);
-        unset($data['browseNodeId1']);
-        unset($data['browseNodeId2']);
-        unset($data['subcategoryPath2']);
-        unset($data['marketingMessage']);
-
         $data = (new DataAdapter())->getData($data);
+        if (env('APPEND_CONNECTION') == 'mysql') {
+            return $this->appendData($category, [array_values($data)]);
+        }
 
         $this->dataByCategory[$category][] = array_values($data);
 
-        if (count($this->dataByCategory[$category]) == 500) {
+        if (count($this->dataByCategory[$category]) == 100) {
 
             $this->appendData($category, $this->dataByCategory[$category]);
             $this->dataByCategory[$category][] = [];
@@ -116,12 +110,6 @@ class DealFeedSpreadSheetFetcher {
 
 
     protected function appendData($category, $dataRow) {
-
-        if($this->i %100 == 0){
-            var_dump($this->i);
-        }
-
-        $this->i++;
         if (env('APPEND_CONNECTION') == 'mysql') {
             return $this->appendDataToDatabase($category, $dataRow);
         }
@@ -180,8 +168,6 @@ class DealFeedSpreadSheetFetcher {
         if (empty($this->dataByCategory)) return false;
 
         foreach ($this->dataByCategory as $category => $data) {
-
-            echo $category;
 
             $this->appendData($category, $data);
         }
