@@ -3,11 +3,9 @@
 namespace Blazemedia\App;
 
 use Blazemedia\App\Api\DealFeedAppendSpreadsheetApi;
+use Blazemedia\App\Utilities\AppendDB;
 use Blazemedia\App\Utilities\DataAdapter;
 use Carbon\Carbon;
-use Exception;
-use PDO;
-use PDOException;
 use SplFileObject;
 
 class DealFeedSpreadSheetFetcher {
@@ -18,6 +16,7 @@ class DealFeedSpreadSheetFetcher {
     protected $clearData;
     protected $credentials;
     protected $db;
+    protected $i;
 
     /**
      * Create a new fetcher command instance.
@@ -27,22 +26,6 @@ class DealFeedSpreadSheetFetcher {
     public function __construct($credentials) {
 
         $this->credentials = $credentials;
-
-        if (env('APPEND_CONNECTION', 'api') == 'mysql') {
-
-            try {
-
-                $host     = env('DB_HOST', 'localhost');
-                $username   = env('DB_USER', 'root');
-                $password = env('DB_PASS', '');
-                $dbname = env('DB_NAME', '');
-
-                $this->db = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-            } catch (PDOException $pe) {
-
-                die("Could not connect to the database $dbname :" . $pe->getMessage());
-            }
-        }
 
         $this->setOptions();
 
@@ -73,7 +56,7 @@ class DealFeedSpreadSheetFetcher {
             $file = new SplFileObject($fileUnzipped);
             $file->setFlags(SplFileObject::READ_CSV);
 
-            $i = 0;
+            $this->i = 0;
             foreach ($file as $row) {
 
                 if (empty($row)) continue;
@@ -134,8 +117,13 @@ class DealFeedSpreadSheetFetcher {
 
     protected function appendData($category, $dataRow) {
 
+        if($this->i %100 == 0){
+            var_dump($this->i);
+        }
+
+        $this->i++;
         if (env('APPEND_CONNECTION') == 'mysql') {
-            return $this->appendDataToDatabase($dataRow);
+            return $this->appendDataToDatabase($category, $dataRow);
         }
 
         return $this->appendDataToSpreadsheet($category, $dataRow);
@@ -151,61 +139,13 @@ class DealFeedSpreadSheetFetcher {
         return $sheet->appendData($category, $dataRow, $this->dataHeaderClean, 'Sheet1');
     }
 
-    protected function appendDataToDatabase($dataRow) {
+    protected function appendDataToDatabase($category, $dataRow) {
 
-        $this->tableExists();
+        $db = new AppendDB();
 
-        $query = "INSERT IGNORE dealfeeds 
-                    (ASIN, title, price, discount, reference_price, reference_type, 
-                    date_start, date_end, category, sub_category, sub_category_other, 
-                    URL, dealid, dealtype, dealstate) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        echo "\n" . $category . "\n";
 
-
-        foreach ($dataRow as $row) {
-
-            if(empty($row)){
-                continue;
-            }
-
-            $statement = $this->db->prepare($query);
-
-            for ($i = 0; $i < count($row); $i++) {
-                $statement->bindParam($i + 1, $row[$i]);
-            }
-
-            $statement->execute();
-        }
-    }
-
-    protected function tableExists() {
-
-        $tableName = 'dealfeeds';
-        $checkTableExists = $this->db->query("SHOW TABLES LIKE '$tableName'")->rowCount() > 0;
-
-        if ($checkTableExists) {
-            return;
-        }
-
-        $query = "CREATE TABLE $tableName (
-                ASIN VARCHAR(255),
-                title VARCHAR(255),
-                price DECIMAL(10, 2),
-                discount VARCHAR(10),
-                reference_price DECIMAL(10, 2),
-                reference_type VARCHAR(50),
-                date_start DATETIME,
-                date_end DATETIME,
-                category VARCHAR(255),
-                sub_category VARCHAR(255),
-                sub_category_other VARCHAR(255),
-                URL VARCHAR(255),
-                dealid VARCHAR(50),
-                dealtype VARCHAR(50),
-                dealstate VARCHAR(50)
-            )";
-
-        $this->db->exec($query);
+        $db->appendData($dataRow);
     }
 
     protected function setOptions() {
@@ -240,6 +180,9 @@ class DealFeedSpreadSheetFetcher {
         if (empty($this->dataByCategory)) return false;
 
         foreach ($this->dataByCategory as $category => $data) {
+
+            echo $category;
+
             $this->appendData($category, $data);
         }
 
