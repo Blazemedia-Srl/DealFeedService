@@ -58,7 +58,6 @@ class DealFeedSpreadSheetFetcher {
                 if (empty($row)) continue;
                 $this->adaptData($row);
             }
-
             if ($this->completeSpreadsheet()) {
                 echo "\n DONE \n";
             }
@@ -97,11 +96,14 @@ class DealFeedSpreadSheetFetcher {
         $data = (new DataAdapter())->getData($data);
         if (env('APPEND_CONNECTION') == 'mysql') {
             return $this->appendData($category, [array_values($data)]);
+            gc_collect_cycles();
+
         }
 
         $this->dataByCategory[$category][] = array_values($data);
 
         if (count($this->dataByCategory[$category]) == 100) {
+            gc_collect_cycles();
 
             $this->appendData($category, $this->dataByCategory[$category]);
             $this->dataByCategory[$category][] = [];
