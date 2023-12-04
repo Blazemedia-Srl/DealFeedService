@@ -72,7 +72,7 @@ class AppendDB {
                 category VARCHAR(255) DEFAULT NULL,
                 sub_category VARCHAR(255) DEFAULT NULL,
                 sub_category_other VARCHAR(255) DEFAULT NULL,
-                URL VARCHAR(255),
+                URL TEXT,
                 dealid VARCHAR(50) DEFAULT NULL,
                 dealtype VARCHAR(50) DEFAULT NULL,
                 dealstate VARCHAR(50) DEFAULT NULL

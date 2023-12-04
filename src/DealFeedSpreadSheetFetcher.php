@@ -131,8 +131,6 @@ class DealFeedSpreadSheetFetcher {
 
         $db = new AppendDB();
 
-        echo "\n" . $category . "\n";
-
         $db->appendData($dataRow);
     }
 
@@ -165,7 +163,10 @@ class DealFeedSpreadSheetFetcher {
     }
 
     protected function completeSpreadsheet(): bool {
-        if (empty($this->dataByCategory)) return false;
+        if (env('APPEND_CONNECTION') == 'mysql') return true;
+
+        if (empty($this->dataByCategory)) return true;
+
 
         foreach ($this->dataByCategory as $category => $data) {
 
