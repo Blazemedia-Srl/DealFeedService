@@ -104,7 +104,7 @@ class AppendDB {
             $date = Carbon::today()->format('Y-m-d H:i:s');
         }
 
-        $query = "TRUNCATE TABLE dealfeeds WHERE date_end < $date";
+        $query = "TRUNCATE TABLE dealfeeds WHERE date_end < '$date'";
 
         $this->db->exec($query);
     }
