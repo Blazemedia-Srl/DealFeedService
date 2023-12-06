@@ -33,6 +33,10 @@ class DataAdapter {
             $format = 'Y-m-d H:i:s';
         }
 
+        if(empty($data['asin'])){
+            $data['asin'] = $this->createAsin($data['dealTitle']);
+        }
+
         return [
             'ASIN' => $data['asin'],
             'Titolo' => substr($data['dealTitle'],0,128),
@@ -61,5 +65,17 @@ class DataAdapter {
             'Data Inizio', 'Data Fine', 'Categoria', 'Sub Categoria',
             'Sub Categoria 2', 'URL', 'DealID', 'DealType', 'DealState'
         ];
+    }
+
+    protected function createAsin($stringa) {
+        $words = explode(' ', $stringa);
+    
+        $asin = '';
+    
+        foreach ($words as $word) {
+            $asin .= strtoupper(substr($word, 0, 1));
+        }
+    
+        return "B-".substr($asin,0,6).rand(100,999);
     }
 }

@@ -67,8 +67,8 @@ class DealFeedSpreadSheetFetcher {
     }
 
     protected function adaptData($dataDirty) {
-        if(!count($dataDirty)){
-            echo"Skipping";
+        if (!count($dataDirty)) {
+            echo "Skipping";
             return;
         }
 
@@ -85,12 +85,12 @@ class DealFeedSpreadSheetFetcher {
             $this->dataHeaderClean = (new DataAdapter())->getHeader();
             return;
         }
-        
-        if(count($this->dataHeader) != count($dataDirty)){
+
+        if (count($this->dataHeader) != count($dataDirty)) {
             echo "Skipping";
             return;
         }
-        
+
         $data = array_combine($this->dataHeader, $dataDirty);
 
         $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
@@ -101,24 +101,23 @@ class DealFeedSpreadSheetFetcher {
 
         $data = (new DataAdapter())->getData($data);
 
-        if($data === false){
+        if ($data === false) {
             echo "Skipping";
             print_r($data);
             return;
         }
-        
+
         if (env('APPEND_CONNECTION') == 'mysql') {
             $this->appendData($category, [array_values($data)]);
             gc_collect_cycles();
 
             return;
-
         }
 
         $this->dataByCategory[$category][] = array_values($data);
 
         if (count($this->dataByCategory[$category]) == 100) {
-            
+
             $this->appendData($category, $this->dataByCategory[$category]);
             $this->dataByCategory[$category][] = [];
             gc_collect_cycles();
@@ -177,11 +176,12 @@ class DealFeedSpreadSheetFetcher {
 
 
     protected function clearPlatformData() {
-        
-        $db = new AppendDB();
+        if (env('APPEND_CONNECTION') == 'mysql') {
 
-        $db->truncateTable();
+            $db = new AppendDB();
 
+            $db->truncateExpiredDatas();
+        }
     }
 
     protected function completeSpreadsheet(): bool {

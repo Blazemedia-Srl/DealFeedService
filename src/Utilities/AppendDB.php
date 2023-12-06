@@ -2,6 +2,7 @@
 
 namespace Blazemedia\App\Utilities;
 
+use Carbon\Carbon;
 use PDO;
 use PDOException;
 
@@ -25,7 +26,7 @@ class AppendDB {
         }
     }
 
-    public function appendData($dataRow){
+    public function appendData($dataRow) {
         $this->tableExists();
 
         $query = "INSERT INTO dealfeeds 
@@ -52,7 +53,7 @@ class AppendDB {
 
         foreach ($dataRow as $row) {
 
-            if(empty($row)){
+            if (empty($row)) {
                 print_r($row);
                 continue;
             }
@@ -65,7 +66,7 @@ class AppendDB {
             $statement->execute();
         }
     }
-    
+
     protected function tableExists() {
 
         $tableName = 'dealfeeds';
@@ -90,15 +91,20 @@ class AppendDB {
                 URL TEXT,
                 dealid VARCHAR(50) DEFAULT NULL,
                 dealtype VARCHAR(50) DEFAULT NULL,
-                dealstate VARCHAR(50) DEFAULT NULL
+                dealstate VARCHAR(50) DEFAULT NULL,
+                PRIMARY KEY ASIN
             )";
 
         $this->db->exec($query);
     }
 
 
-    public function truncateTable(){
-        $query = "TRUNCATE TABLE dealfeeds";
+    public function truncateExpiredDatas($date = null) {
+        if (!$date){
+            $date = Carbon::today()->format('Y-m-d H:i:s');
+        }
+
+        $query = "TRUNCATE TABLE dealfeeds WHERE date_end < $date";
 
         $this->db->exec($query);
     }
