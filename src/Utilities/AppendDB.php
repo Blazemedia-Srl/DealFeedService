@@ -81,4 +81,10 @@ class AppendDB {
         $this->db->exec($query);
     }
 
+
+    public function truncateTable(){
+        $query = "TRUNCATE TABLE dealfeeds";
+
+        $this->db->exec($query);
+    }
 }

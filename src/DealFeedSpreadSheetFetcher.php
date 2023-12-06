@@ -162,6 +162,11 @@ class DealFeedSpreadSheetFetcher {
 
 
     protected function clearPlatformData() {
+        
+        $db = new AppendDB();
+
+        $db->truncateTable();
+        
     }
 
     protected function completeSpreadsheet(): bool {
