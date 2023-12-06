@@ -95,8 +95,10 @@ class DealFeedSpreadSheetFetcher {
 
         $data = (new DataAdapter())->getData($data);
         if (env('APPEND_CONNECTION') == 'mysql') {
-            return $this->appendData($category, [array_values($data)]);
+            $this->appendData($category, [array_values($data)]);
             gc_collect_cycles();
+
+            return;
 
         }
 
@@ -166,7 +168,7 @@ class DealFeedSpreadSheetFetcher {
         $db = new AppendDB();
 
         $db->truncateTable();
-        
+
     }
 
     protected function completeSpreadsheet(): bool {
