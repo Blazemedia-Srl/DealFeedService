@@ -94,6 +94,11 @@ class DealFeedSpreadSheetFetcher {
         $data['subcategoryPath1'] = implode("/", array_slice($categories, 0, 3));
 
         $data = (new DataAdapter())->getData($data);
+
+        if($data === false){
+            return;
+        }
+        
         if (env('APPEND_CONNECTION') == 'mysql') {
             $this->appendData($category, [array_values($data)]);
             gc_collect_cycles();

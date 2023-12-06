@@ -11,7 +11,7 @@ class DataAdapter {
     public function getData($data) {
         
         $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
-        if ($endDate->isPast()) echo "Skip ".$endDate->format('d/m/Y');return;
+        if ($endDate->isPast()) echo "Skip ".$endDate->format('d/m/Y');return false;
         $categories = explode("/", $data['subcategoryPath1']);
 
         unset($data['category']);
