@@ -32,7 +32,22 @@ class AppendDB {
                     (ASIN, title, price, discount, reference_price, reference_type, 
                     date_start, date_end, category, sub_category, sub_category_other, 
                     URL, dealid, dealtype, dealstate) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE 
+                    title = VALUES(title),
+                    price = VALUES(price),
+                    discount = VALUES(discount),
+                    reference_price = VALUES(reference_price),
+                    reference_type = VALUES(reference_type),
+                    date_start = VALUES(date_start),
+                    date_end = VALUES(date_end),
+                    category = VALUES(category),
+                    sub_category = VALUES(sub_category),
+                    sub_category_other = VALUES(sub_category_other),
+                    URL = VALUES(URL),
+                    dealid = VALUES(dealid),
+                    dealtype = VALUES(dealtype),
+                    dealstate = VALUES(dealstate)";
 
 
         foreach ($dataRow as $row) {
