@@ -55,7 +55,6 @@ class DealFeedSpreadSheetFetcher {
             $file = new SplFileObject($fileUnzipped);
             $file->setFlags(SplFileObject::READ_CSV);
             foreach ($file as $row) {
-                if (empty($row)) continue;
                 $this->adaptData($row);
             }
             if ($this->completeSpreadsheet()) {
@@ -68,8 +67,13 @@ class DealFeedSpreadSheetFetcher {
     }
 
     protected function adaptData($dataDirty) {
+        if(!count($dataDirty)){
+            echo"Skipping";
+            return;
+        }
 
         if (count($this->dataByCategory) == 0 && empty($this->dataHeader)) {
+            echo "\nHeader Found...\n";
             $dataHeader = array_combine($dataDirty, $dataDirty);
             unset($dataHeader['category']);
             unset($dataHeader['imageURL']);
@@ -77,14 +81,16 @@ class DealFeedSpreadSheetFetcher {
             unset($dataHeader['browseNodeId2']);
             unset($dataHeader['subcategoryPath2']);
             unset($dataHeader['marketingMessage']);
-
             $this->dataHeader = $dataDirty;
             $this->dataHeaderClean = (new DataAdapter())->getHeader();
             return;
         }
-
-        if(count($this->dataHeader) != count($dataDirty))return;
-
+        
+        if(count($this->dataHeader) != count($dataDirty)){
+            echo "Skipping";
+            return;
+        }
+        
         $data = array_combine($this->dataHeader, $dataDirty);
 
         $endDate = Carbon::createFromFormat('Y-m-d H:i:s O', $data['dealEndTime']);
@@ -96,6 +102,8 @@ class DealFeedSpreadSheetFetcher {
         $data = (new DataAdapter())->getData($data);
 
         if($data === false){
+            echo "Skipping";
+            print_r($data);
             return;
         }
         

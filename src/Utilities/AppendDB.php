@@ -38,7 +38,7 @@ class AppendDB {
         foreach ($dataRow as $row) {
 
             if(empty($row)){
-                var_dump($row);
+                print_r($row);
                 continue;
             }
 
