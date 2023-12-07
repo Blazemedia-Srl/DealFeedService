@@ -70,7 +70,7 @@ class AppendDB {
     protected function tableExists() {
 
         $tableName = 'dealfeeds';
-        $checkTableExists = $this->db->query("SHOW TABLES LIKE '$tableName'")->rowCount() > 0;
+        $checkTableExists = $this->db->query("SHOW TABLES LIKE '%{$tableName}%'")->rowCount() > 0;
 
         if ($checkTableExists) {
             return;
