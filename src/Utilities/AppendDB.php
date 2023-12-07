@@ -7,7 +7,9 @@ use PDO;
 use PDOException;
 
 class AppendDB {
+
     protected $db;
+    protected $tableName = 'dealfeeds';
 
 
     function __construct() {
@@ -15,19 +17,23 @@ class AppendDB {
         try {
 
             $host     = env('DB_HOST', 'localhost');
-            $username   = env('DB_USER', 'root');
+            $username = env('DB_USER', 'root');
             $password = env('DB_PASS', '');
-            $dbname = env('DB_NAME', '');
+            $dbname   = env('DB_NAME', '');
 
             $this->db = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+
         } catch (PDOException $pe) {
 
             die("Could not connect to the database $dbname :" . $pe->getMessage());
         }
+
+        if( !$this->tableExists() ) $this->createTable();
+
     }
 
+
     public function appendData($dataRow) {
-        $this->tableExists();
 
         $query = "INSERT INTO dealfeeds 
                     (ASIN, title, price, discount, reference_price, reference_type, 
@@ -51,10 +57,10 @@ class AppendDB {
                     dealstate = VALUES(dealstate)";
 
 
-        foreach ($dataRow as $row) {
+        foreach( $dataRow as $row ) {
 
-            if (empty($row)) {
-                print_r($row);
+            if( empty($row) ) {
+                print_r( $row );
                 continue;
             }
 
@@ -67,35 +73,37 @@ class AppendDB {
         }
     }
 
-    protected function tableExists() {
 
-        $tableName = 'dealfeeds';
-        $checkTableExists = $this->db->query("SHOW TABLES LIKE '%{$tableName}%'")->rowCount() > 0;
+    protected function createTable() {
 
-        if ($checkTableExists) {
-            return;
-        }
-
-        $query = "CREATE TABLE $tableName (
-                ASIN VARCHAR(255) DEFAULT NULL,
-                title VARCHAR(255) DEFAULT NULL,
-                price DECIMAL(10, 2) DEFAULT NULL,
-                discount VARCHAR(10) DEFAULT NULL,
-                reference_price DECIMAL(10, 2) DEFAULT NULL,
-                reference_type VARCHAR(50) DEFAULT NULL,
-                date_start DATETIME,
-                date_end DATETIME,
-                category VARCHAR(255) DEFAULT NULL,
-                sub_category VARCHAR(255) DEFAULT NULL,
-                sub_category_other VARCHAR(255) DEFAULT NULL,
-                URL TEXT,
-                dealid VARCHAR(50) DEFAULT NULL,
-                dealtype VARCHAR(50) DEFAULT NULL,
-                dealstate VARCHAR(50) DEFAULT NULL,
-                PRIMARY KEY ASIN
-            )";
+        $query = <<<SQL
+        
+        CREATE TABLE `{$this->tableName}` (
+            `ASIN`  VARCHAR(63) PRIMARY KEY,
+            `title` VARCHAR(255),
+            `price` DECIMAL(10, 2),
+            `discount`  VARCHAR(10) DEFAULT NULL,
+            `reference_price` DECIMAL(10, 2) DEFAULT NULL,
+            `reference_type`  VARCHAR(63) DEFAULT NULL,
+            `date_start` DATETIME,
+            `date_end`   DATETIME,
+            `category` VARCHAR(255) DEFAULT NULL,
+            `sub_category` VARCHAR(255) DEFAULT NULL,
+            `sub_category_other` VARCHAR(255) DEFAULT NULL,
+            `URL` TEXT,
+            `dealid` VARCHAR(63) DEFAULT NULL,
+            `dealtype` VARCHAR(63) DEFAULT NULL,
+            `dealstate` VARCHAR(63) DEFAULT NULL
+        )        
+        SQL;
 
         $this->db->exec($query);
+    }
+
+    
+    protected function tableExists() {
+
+        return $this->db->query("SHOW TABLES LIKE '%{$this->tableName}%'")->rowCount() > 0;
     }
 
 
